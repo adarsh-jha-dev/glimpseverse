@@ -90,7 +90,7 @@ router.post(
 
     const password = req.body.password;
     try {
-      let user = await User.findOne({ username : req.body.username});
+      let user = await User.findOne({ username: req.body.username });
       if (!user) {
         return res.status(400).json({
           success,
@@ -133,4 +133,64 @@ router.post("/getuser", fetchuser, async (req, res) => {
     res.status(500).send("Internal Server Error");
   }
 });
+
+router.post("/searchuser", fetchuser, (req, res) => {
+  const searchQuery = req.body.searchQuery;
+
+  const regex = new RegExp(searchQuery, "i");
+  User.find(
+    {
+      $or: [{ firstname: { $regex: regex } }, { username: { $regex: regex } }],
+    },
+    "-password"
+  )
+    .then((users) => {
+      if (users.length > 0) {
+        res.json(users);
+      } else {
+        return res.json({ message: "No users found" });
+      }
+    })
+    .catch((e) => {
+      res.status(400).json(e);
+    });
+});
+
+router.put("/edituser", fetchuser, async (req, res) => {
+  try {
+    await User.findOneAndUpdate(
+      { _id: req.user.id },
+      {
+        $set: {
+          firstname: req.body.firstname || req.user.firstname,
+          lastname: req.body.lastname || req.user.lastname,
+          dob: req.body.dob || req.user.dob,
+          username: req.body.username || req.user.username,
+        },
+      },
+      { new: true, select: "-password" }
+    )
+      .then((updateduser) => {
+        res.json(updateduser);
+      })
+      .catch((e) => {
+        res.status(400).json({ error: "Some error occured" });
+      });
+  } catch (e) {
+    console.log(e.message);
+    res.status(400).json({ error: "Internal server error" });
+  }
+});
+
+router.delete("/deletemyaccount", fetchuser, async (req, res) => {
+  try {
+    await User.findByIdAndDelete(req.user.id).then(() => {
+      res.json({ success: "Account deleted successfully" });
+    });
+  } catch (e) {
+    res.status(500).json({ error: "Internal server error" });
+    console.log(e.message);
+  }
+});
+
 module.exports = router;
