@@ -2,6 +2,8 @@ const express = require("express");
 const mongoose = require("mongoose");
 const Post = require("../Models/Post");
 const User = require("../Models/User");
+const Comment = require('../Models/Comment');
+const { body, validationResult} = require('express-validator');
 const fetchuser = require("../Middleware/fetchUser");
 const router = express.Router();
 
@@ -124,5 +126,51 @@ router.delete("/deletepost/:id", fetchuser, async (req, res) => {
     res.status(500).json({ error: "Internal server error" });
   }
 });
+
+// ROUTE - 6: Get posts from users other than the logged-in user using GET
+router.get("/feed", fetchuser, async (req, res) => {
+  try {
+    const loggedInUserId = req.user.id;
+
+    // Find posts whose author is not the logged-in user
+    const posts = await Post.find({ author: { $ne: loggedInUserId } });
+
+    if (!posts || posts.length === 0) {
+      return res.json({ message: "No posts from other users found" });
+    }
+
+    res.json(posts);
+  } catch (e) {
+    console.error(e.message);
+    res.status(500).json({ error: "Internal Server error" });
+  }
+});
+
+
+// ROUTE : 7 Fetching all the comments on a particular post using GET : /api/post/getcomments/:id
+router.get("/getcomments/:postId", fetchuser, async (req, res) => {
+  try {
+    const postId = req.params.postId;
+    const comments = await Comment.find({ post: postId }).populate({
+      path: "author",
+      select: "username",
+    });
+
+    if (comments.length === 0) {
+      return res.json({ message: "No comments on the post" });
+    } else {
+      const commentsWithAuthor = comments.map((comment) => ({
+        text: comment.text,
+        author: comment.author,
+      }));
+      res.json(commentsWithAuthor);
+    }
+  } catch (e) {
+    console.log(e.message);
+    return res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+
 
 module.exports = router;

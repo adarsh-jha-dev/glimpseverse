@@ -30,7 +30,18 @@ const postSchema = new mongoose.Schema(
         type: String,
       },
     ],
-    // You can include fields for likes, comments, and timestamps.
+    likes: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User",
+      },
+    ],
+    comments: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Comment",
+      },
+    ],
   },
   { timestamps: true }
 );

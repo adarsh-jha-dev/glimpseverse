@@ -8,8 +8,9 @@ const port = process.env.PORT || 5000; // Use the provided PORT or 5000 as the d
 
 app.use(express.json());
 
-app.use("/api/auth", require("./routes/auth"));
-app.use("/api/post", require("./routes/post"));
+app.use("/api/auth", require("./Routes/auth"));
+app.use("/api/post", require("./Routes/post"));
+app.use("/api/comment", require("./Routes/comment"));
 
 app.listen(port, () => {
   console.log(`Backend is listening at port ${port}`);
